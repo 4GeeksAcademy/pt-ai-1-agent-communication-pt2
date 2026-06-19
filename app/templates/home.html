@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Fictionary API{% endblock %}
+
+{% block content %}
+<h1>Fictionary API</h1>
+<p>A REST API for students learning HTTP and API interaction.</p>
+
+<section class="card">
+    <h2>API Versions</h2>
+    <ul>
+        <li><strong>v1</strong> — <code>/api/v1</code> — unauthenticated CRUD on media items</li>
+        <li><strong>v2</strong> — <code>/api/v2</code> — authenticated API with relationships</li>
+    </ul>
+    <p><a href="/docs">Browse the interactive API docs →</a></p>
+</section>
+
+<section class="card">
+    <h2>Get Started</h2>
+    <p>Try the v1 API right away — no account needed:</p>
+    <pre><code>curl http://localhost:8000/api/v1/media-items</code></pre>
+    <p>For v2, <a href="/auth/login">sign in with GitHub</a> and generate an API key from your dashboard.</p>
+</section>
+{% endblock %}

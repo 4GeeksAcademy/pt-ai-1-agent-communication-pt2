@@ -1,0 +1,30 @@
+---
+description: Safe git, database, and deployment practices
+alwaysApply: true
+---
+
+# Operations Safety
+
+## Git
+
+- Only create commits when the user explicitly asks
+- Never run `git push --force` to `main` or `master`
+- Never skip hooks (`--no-verify`) unless the user explicitly requests it
+- Never amend commits that are already pushed to remote
+
+## Database
+
+- All schema changes go through Alembic migrations — no manual production table edits
+- Never run destructive commands against production Neon (`DROP`, `TRUNCATE`, mass `DELETE`) without explicit user approval
+- Tests must use a separate or isolated database — never run tests against production
+
+## Deployment & config
+
+- Do not change Vercel, Neon, or GitHub OAuth app settings without user confirmation
+- Keep local dev on Docker Compose Postgres; production uses Neon — do not conflate the two
+
+## Scope
+
+- Read `memory-bank/` before making architectural or behavioral changes
+- Make minimal, focused diffs — do not refactor unrelated code
+- Do not break the v1 API contract; v1 must stay unauthenticated and backward-compatible

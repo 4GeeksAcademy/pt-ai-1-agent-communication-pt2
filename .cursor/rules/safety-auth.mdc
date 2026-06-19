@@ -1,0 +1,43 @@
+---
+description: Auth implementation guardrails for API and web UI
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Auth Safety
+
+## Separation of concerns
+
+- **v1** (`/api/v1`): no auth middleware or dependencies — public CRUD only
+- **v2** (`/api/v2`): require `X-API-Key` header on every route
+- **Web UI** (`/dashboard`, `/admin`): session cookies via GitHub OAuth only
+- Do not use OAuth tokens or JWT for programmatic API access
+
+## Implementation rules
+
+- Apply auth via FastAPI dependencies in `app/dependencies.py` — not inline per route
+- Admin routes (`/admin/*`) must check `user.is_admin` and return 403 for non-admins
+- `is_admin` defaults to `false`; the **first** GitHub sign-in is promoted automatically
+- Admins can promote/demote other users via the admin panel; the first admin (lowest user id) cannot be demoted
+- Regenerating an API key must revoke the previous key (`revoked_at` timestamp)
+
+## Reject insecure shortcuts
+
+```python
+# BAD — plaintext key in database
+api_key.key = plaintext_key
+
+# GOOD — hash before storage
+api_key.key_hash = hashlib.sha256(plaintext_key.encode()).hexdigest()
+
+# BAD — auth on v1 router
+router_v1 = APIRouter(dependencies=[RequireApiKey])
+
+# GOOD — auth only on v2
+router_v2 = APIRouter(dependencies=[RequireApiKey])
+```
+
+## Session cookies
+
+- Sign sessions with `SESSION_SECRET` from environment
+- Use `httponly` cookies; do not store API keys in browser cookies or localStorage

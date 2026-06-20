@@ -11,6 +11,7 @@ from app.models.genre import Genre
 from app.models.media_item import MediaItem
 from app.models.medium import Medium
 from app.models.user import User
+from app.web.api_keys import get_active_api_key, regenerate_api_key
 from app.web.users import get_bootstrap_admin_id, list_users
 
 router = APIRouter(prefix="/admin", tags=["web"])
@@ -30,7 +31,9 @@ async def admin_home(
     genres = list((await session.execute(select(Genre).order_by(Genre.id))).scalars().all())
     users = await list_users(session)
     bootstrap_admin_id = await get_bootstrap_admin_id(session)
+    api_key = await get_active_api_key(session, user.id)
     message = request.query_params.get("message")
+    new_key = request.query_params.get("new_key")
     return templates.TemplateResponse(
         request=request,
         name="admin/index.html",
@@ -43,6 +46,9 @@ async def admin_home(
             "genres": genres,
             "users": users,
             "bootstrap_admin_id": bootstrap_admin_id,
+            "api_key_prefix": api_key.prefix if api_key else None,
+            "has_api_key": api_key is not None,
+            "new_key": new_key,
             "message": message,
         },
     )
@@ -228,3 +234,12 @@ async def demote_user(
         url=f"/admin?message={target.username}+removed+from+admins",
         status_code=303,
     )
+
+
+@router.post("/api-key")
+async def create_or_regenerate_api_key(
+    user: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+) -> RedirectResponse:
+    _, plaintext = await regenerate_api_key(session, user.id)
+    return RedirectResponse(url=f"/admin?new_key={plaintext}", status_code=303)
